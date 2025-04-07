@@ -4,7 +4,7 @@
 - Enable userChrome Customizations:
     In `about:config` go to `toolkit.legacyUserProfileCustomizations.stylesheets` and set it to True.
 - Install and Setup the userChrome.js Loader from [Autoconfig](https://github.com/MrOtherGuy/fx-autoconfig/tree/master)
-- Install the Tab groups config from [Zen Premium](https://github.com/wysh3/zen-premium)
+- Install the Tab groups config from [Advanced Tab Groups](https://github.com/Anoms12/Advanced-Tab-Groups)
     If you already have a TabGroup Config you can skip this
 - For the AI to work install [Ollama](https://ollama.com/)
     Im using the `llama3.1` in the script, you are free to use anything else if you prefer to do so.
