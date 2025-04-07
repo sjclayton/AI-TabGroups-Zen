@@ -158,9 +158,6 @@
         .tabbrowser-tab {
             transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         }
-        tab-group {
-            transition: background-color 0.3s ease;
-        }
     `
     };
 
