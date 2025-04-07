@@ -20,7 +20,9 @@
 ## How it works?
 - The script has two phases, first it manually sorts tabs that have common words in their title and url, second it uses the ai to sort rest of the tab and see if they fit in the existing groups (that were manually created) or should it create a new group.
 - The script only fetches the tabs full url and title, thus it prioritizes the title first for main context and url for sub context.
+- The sort function only works when the cateogry has 2 or more tabs to sort into a group
 - You are free to change the ai prompt to your suitable workflow. The prompt is at the top in `apiConfig`.
+- The Clear button only clears un-grouped nonpinned tabs.
 
 **Peace <3**
 
