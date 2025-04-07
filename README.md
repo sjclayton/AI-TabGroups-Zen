@@ -1,10 +1,7 @@
 # ✨ Ai Tab Groups for Zen Browser ✨
 ‼️This is still Work-in-Progress ‼️
 
-
-
-https://github.com/user-attachments/assets/1b54d740-02cc-42e7-a1f6-854fdedb9a40
-
+https://github.com/user-attachments/assets/fc792843-b1da-448e-ba00-63322a3d9c99
 
 
 ## Pre-requisites
