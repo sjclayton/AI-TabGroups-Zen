@@ -1,5 +1,12 @@
 # ✨ Ai Tab Groups for Zen Browser ✨
 ‼️This is still Work-in-Progress ‼️
+
+
+
+https://github.com/user-attachments/assets/1b54d740-02cc-42e7-a1f6-854fdedb9a40
+
+
+
 ## Pre-requisites
 - Enable userChrome Customizations:
     In `about:config` go to `toolkit.legacyUserProfileCustomizations.stylesheets` and set it to True.
