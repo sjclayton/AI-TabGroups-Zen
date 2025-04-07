@@ -196,9 +196,6 @@
         .tabbrowser-tab {
             transition: transform 0.3s ease-out, opacity 0.3s ease-out, max-height 0.5s ease-out, margin 0.5s ease-out, padding 0.5s ease-out; /* Add transition for closing */
         }
-        tab-group {
-            transition: background-color 0.3s ease;
-        }
     `
     };
 
@@ -1289,5 +1286,5 @@
         // Otherwise, wait for the 'load' event
         window.addEventListener("load", initializeScript, { once: true });
     }
-
+  
 })(); // End script wrapper
