@@ -38,7 +38,7 @@
             },
             gemini: {
                 enabled: true,
-                apiKey: 'YOUR_GEMINI_API_KEY', // <<< --- PASTE YOUR KEY HERE --- >>> // AIzaSyCXgBVgLbqPz6YfsvNyXNhjrHTfhDJvzJk
+                apiKey: 'YOUR_GEMINI_API_KEY', // <<< --- PASTE YOUR KEY HERE --- >>> 
                 model: 'gemini-1.5-flash-latest',
                 // Endpoint structure: https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}
                 apiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/',
