@@ -10,6 +10,8 @@
     Im using the `llama3.1` in the script, you are free to use anything else if you prefer to do so.
 
 ## Setup and Install
+- Choose one of the file `tab_sort.uc.js` or `tab_sort_clear.uc.js`
+    The second one adds a clear button along with the sort button
 - Copy and paste the `tab_sort.uc.js` file to your `chrome` folder.
 - In the above file, go to `apiConfig` and change the model name to whatever you have installed. By default its set to `llama3.1:latest`
 - Open Zen browser, go to `about:support` and clear start up cache.

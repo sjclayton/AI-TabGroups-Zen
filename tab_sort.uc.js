@@ -1,4 +1,4 @@
-// FINAL VERSION 4.7 (Restructured Code + AI Mismatch First Line Fix + Title>Host)
+// FINAL VERSION 4.7.1 (Restructured Code + AI Mismatch Fix + Title>Host + No Clear Button Space)
 (() => {
     // --- Configuration ---
     const CONFIG = {
@@ -54,12 +54,13 @@
             // Add more common/noisy words specific to your browsing habits if needed
         ]),
         minKeywordLength: 3, // Minimum length for a word to be considered a keyword
+        // --- Styles (v4.7.1 - Removed space for clear button) ---
         styles: `
             #sort-button {
                 opacity: 0;
                 transition: opacity 0.1s ease-in-out;
                 position: absolute;
-                right: 65px;
+                right: 0;
                 font-size: 12px;
                 width: 60px;
                 pointer-events: auto;
@@ -77,17 +78,9 @@
                 color: white;
                 border-radius: 4px;
             }
-            .vertical-pinned-tabs-container-separator:has(#clear-button):has(#sort-button):hover {
-                 width: calc(100% - 125px);
+            .vertical-pinned-tabs-container-separator:has(#sort-button):hover {
+                 width: calc(100% - 60px);
                  margin-right: auto;
-            }
-            .vertical-pinned-tabs-container-separator:not(:has(#clear-button)):has(#sort-button):hover {
-                 width: calc(100% - 65px);
-                 margin-right: auto;
-            }
-            .vertical-pinned-tabs-container-separator:not(:has(#sort-button)):hover {
-                  width: calc(100% - 65px);
-                  margin-right: auto;
             }
             .vertical-pinned-tabs-container-separator {
                  display: flex;
@@ -121,8 +114,15 @@
 
     const injectStyles = () => {
         if (document.getElementById('tab-sort-styles')) {
+            // If styles exist, update them in case the config changed
+            const styleElement = document.getElementById('tab-sort-styles');
+            if (styleElement.textContent !== CONFIG.styles) {
+                 styleElement.textContent = CONFIG.styles;
+                 console.log("SORT BTN: Styles updated.");
+            }
             return;
         }
+        // If styles don't exist, create and append
         const style = Object.assign(document.createElement('style'), {
             id: 'tab-sort-styles',
             textContent: CONFIG.styles
@@ -148,7 +148,6 @@
                     fullUrl = currentURL.href;
                     hostname = currentURL.hostname.replace(/^www\./, '');
                 } catch (e) {
-                    // console.warn(`Error parsing URL for tab: ${originalTitle}`, e); // Keep this potentially noisy log commented unless debugging URL issues
                     hostname = 'Invalid URL';
                     fullUrl = browser?.currentURI?.spec || 'Invalid URL';
                 }
@@ -285,8 +284,6 @@
                 }
             };
 
-            // console.log(`Batch AI: Sending request (model: ${requestBody.model})...`); // Less verbose log
-
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: headers,
@@ -300,7 +297,6 @@
 
             const data = await response.json();
             let aiText = data.response?.trim();
-            // console.log(`Batch AI: Raw Response (first 100 chars): "${aiText?.substring(0, 100)}..."`); // Reduced verbosity
 
             if (!aiText) {
                 throw new Error("Empty API response");
@@ -308,26 +304,24 @@
 
             const lines = aiText.split('\n').map(line => line.trim()).filter(Boolean);
 
-            // Handle potential mismatch between requested tabs and received category lines
+            // Handle potential mismatch
             if (lines.length !== validTabs.length) {
                 console.warn(`Batch AI: Mismatch! Expected ${validTabs.length} topics, received ${lines.length}.`);
                 if (validTabs.length === 1 && lines.length > 0) {
-                    // Special case: Sent 1 tab, got >1 lines. Trust the first line.
                     const firstLineTopic = processTopic(lines[0]);
-                    console.warn(` -> Mismatch Correction: Using first line "${lines[0]}" -> Processed Topic: "${firstLineTopic}" for the single tab.`);
+                    console.warn(` -> Mismatch Correction: Using first line "${lines[0]}" -> Topic: "${firstLineTopic}"`);
                     result = [{ tab: validTabs[0], topic: firstLineTopic }];
                 } else {
-                    // Fallback to "Uncategorized" for all tabs in other mismatch cases
                     console.warn(` -> Fallback: Assigning "Uncategorized" to all ${validTabs.length} tabs.`);
                     result = validTabs.map(tab => ({ tab: tab, topic: "Uncategorized" }));
                 }
             } else {
-                // Normal processing (No Mismatch)
+                // Normal processing
                 const processedTopics = lines.map(processTopic);
-                console.log("Batch AI: Processed & Normalized Topics:", processedTopics);
+                console.log("Batch AI: Processed Topics:", processedTopics);
                 result = validTabs.map((tab, index) => ({
                     tab: tab,
-                    topic: processedTopics[index] // processTopic handles Uncategorized fallback
+                    topic: processedTopics[index]
                 }));
             }
 
@@ -335,10 +329,8 @@
 
         } catch (error) {
             console.error(`Batch AI: Error getting topics:`, error);
-            // Return "Uncategorized" for all tabs in case of any error
             return validTabs.map(tab => ({ tab, topic: "Uncategorized" }));
         } finally {
-            // Remove loading visual after a short delay
             setTimeout(() => {
                 validTabs.forEach(tab => tab.classList.remove('tab-is-sorting'));
             }, 200);
@@ -353,7 +345,7 @@
             return;
         }
         isSorting = true;
-        console.log("Starting tab sort (v4.7)...");
+        console.log("Starting tab sort (v4.7.1)..."); // Updated version number
 
         try {
             const currentWorkspaceId = window.ZenWorkspaces?.activeWorkspace;
@@ -361,7 +353,6 @@
                 console.error("Cannot get current workspace ID.");
                 isSorting = false; return;
             }
-            // console.log(`Sorting tabs for Workspace ID: ${currentWorkspaceId}`);
 
             const initialTabsToSort = Array.from(gBrowser.tabs).filter(tab =>
                 tab.getAttribute('zen-workspace-id') === currentWorkspaceId &&
@@ -375,7 +366,6 @@
             console.log(`Found ${initialTabsToSort.length} potentially sortable tabs.`);
 
             // --- Phase 1: Pre-grouping ---
-            // console.log("--- Phase 1: Pre-grouping ---");
             const preGroups = {};
             const handledTabs = new Set();
             const tabDataCache = new Map();
@@ -387,8 +377,7 @@
                 tabKeywordsCache.set(tab, data.title ? extractTitleKeywords(data.title) : new Set());
             });
 
-            // Group by Title Keywords (High Priority)
-            // console.log(" -> Strategy 1: Grouping by Title Keywords...");
+            // Group by Title Keywords
             const keywordToTabsMap = new Map();
             initialTabsToSort.forEach(tab => {
                 const keywords = tabKeywordsCache.get(tab);
@@ -408,8 +397,7 @@
                     potentialKeywordGroups.push({ keyword: keyword, tabs: tabsSet, size: tabsSet.size });
                 }
             });
-            potentialKeywordGroups.sort((a, b) => b.size - a.size); // Process largest groups first
-            // console.log(`   - Found ${potentialKeywordGroups.length} potential keyword groups meeting threshold.`);
+            potentialKeywordGroups.sort((a, b) => b.size - a.size);
 
             potentialKeywordGroups.forEach(({ keyword, tabs }) => {
                 const finalTabsForGroup = new Set();
@@ -423,10 +411,8 @@
                     finalTabsForGroup.forEach(tab => handledTabs.add(tab));
                 }
             });
-            // console.log(` -> Title Keyword grouping done. ${handledTabs.size} tabs handled.`);
 
-            // Group by Hostname (Lower Priority, only if name not already used)
-            // console.log(" -> Strategy 2: Grouping by Hostname...");
+            // Group by Hostname
             const hostnameCounts = {};
             initialTabsToSort.forEach(tab => {
                 if (!handledTabs.has(tab)) {
@@ -442,8 +428,7 @@
                 if (hostnameCounts[hostname] >= CONFIG.preGroupingThreshold) {
                     const categoryName = processTopic(hostname);
                      if (preGroups[categoryName]) {
-                         // console.log(`   - Skipping Hostname group "${categoryName}" (from "${hostname}") as name already used by keyword group.`);
-                         continue; // Avoid overwriting a potentially more specific keyword group
+                         continue; // Avoid overwriting keyword group
                      }
                     const tabsForHostnameGroup = [];
                     initialTabsToSort.forEach(tab => {
@@ -452,7 +437,6 @@
                              if (data?.hostname === hostname) { tabsForHostnameGroup.push(tab); }
                          }
                     });
-                    // Double-check threshold after filtering already handled tabs
                     if(tabsForHostnameGroup.length >= CONFIG.preGroupingThreshold) {
                         console.log(`   - Pre-Grouping by Hostname: "${hostname}" (Count: ${tabsForHostnameGroup.length}) -> Category: "${categoryName}"`);
                         preGroups[categoryName] = tabsForHostnameGroup;
@@ -460,37 +444,24 @@
                     }
                 }
             }
-            // console.log(` -> Phase 1 complete. ${handledTabs.size} total tabs pre-grouped. ${Object.keys(preGroups).length} pre-groups identified.`);
 
-            // --- Phase 2: AI Processing for Remaining Tabs ---
-            // console.log("--- Phase 2: AI Processing ---");
+            // --- Phase 2: AI Processing ---
             const tabsForAI = initialTabsToSort.filter(tab => !handledTabs.has(tab) && tab.isConnected);
             let aiTabTopics = [];
             if (tabsForAI.length > 0) {
-                // console.log(` -> Sending ${tabsForAI.length} remaining tabs to AI...`);
                 aiTabTopics = await askAIForMultipleTopics(tabsForAI);
-                // console.log(` -> AI processing returned ${aiTabTopics.length} results.`);
-            } else {
-                // console.log(" -> No tabs remaining for AI processing.");
             }
 
-            // --- Phase 3: Final Grouping (Combine & Apply) ---
-            // console.log("--- Phase 3: Final Grouping ---");
-            const finalGroups = { ...preGroups }; // Start with pre-grouped tabs
+            // --- Phase 3: Final Grouping ---
+            const finalGroups = { ...preGroups };
 
             aiTabTopics.forEach(({ tab, topic }) => {
-                 // Skip "Uncategorized" or invalid/disconnected tabs
                  if (!topic || topic === "Uncategorized" || !tab || !tab.isConnected) {
-                      if (topic === "Uncategorized") {
-                           const tabInfo = tabDataCache.get(tab) || getTabData(tab);
-                           // console.log(` -> Skipping AI result for tab "${tabInfo.title}" (Topic: Uncategorized)`);
-                      }
                       return;
                  }
                  if (!finalGroups[topic]) {
                      finalGroups[topic] = [];
                  }
-                  // console.log(` -> Adding AI result: Tab "${(tabDataCache.get(tab) || getTabData(tab)).title}" to group "${topic}".`);
                  finalGroups[topic].push(tab);
              });
 
@@ -500,53 +471,44 @@
                 isSorting = false; return;
             }
 
-            // Cache existing groups for faster lookup
+            // Cache existing groups
             const existingGroupElementsMap = new Map();
             document.querySelectorAll(`tab-group[zen-workspace-id="${currentWorkspaceId}"]`).forEach(groupEl => {
                 const label = groupEl.getAttribute('label');
                 if (label) existingGroupElementsMap.set(label, groupEl);
             });
-            // console.log(` -> Found ${existingGroupElementsMap.size} existing groups in workspace.`);
 
-            // Process final groups: Move to existing or create new
+            // Process final groups
             for (const topic in finalGroups) {
-                const tabsForThisTopic = finalGroups[topic].filter(t => t && t.isConnected); // Final connectivity check
+                const tabsForThisTopic = finalGroups[topic].filter(t => t && t.isConnected);
                 if (tabsForThisTopic.length === 0) {
-                    // console.log(` -> Skipping group "${topic}" as tabs disconnected.`);
                     continue;
                 }
 
                 const existingGroupElement = existingGroupElementsMap.get(topic);
                 if (existingGroupElement) {
-                    // Move tabs to existing group
+                    // Move to existing
                     console.log(` -> Moving ${tabsForThisTopic.length} tabs to existing group "${topic}".`);
                     try {
-                        // Ensure group is expanded visually
                         if (existingGroupElement.getAttribute("collapsed") === "true") existingGroupElement.setAttribute("collapsed", "false");
                         const groupLabelElement = existingGroupElement.querySelector('.tab-group-label');
                         if (groupLabelElement) groupLabelElement.setAttribute('aria-expanded', 'true');
 
                         for (const tab of tabsForThisTopic) {
                             if (!tab || !tab.isConnected) continue;
-                            // const tabInfo = tabDataCache.get(tab) || getTabData(tab); // Removed verbose inner loop log
-                            // console.log(`   -> Moving tab: "${tabInfo.title}"`);
                             gBrowser.moveTabToGroup(tab, existingGroupElement);
                         }
-                        // console.log(` -> Finished moving tabs to existing group "${topic}".`);
                     } catch (e) { console.error(`Error moving tabs to existing group "${topic}":`, e); }
                 } else {
-                    // Create a new group
+                    // Create new group
                     console.log(` -> Creating new group "${topic}" with ${tabsForThisTopic.length} tabs.`);
                     const firstValidTabForGroup = tabsForThisTopic[0];
                     const groupOptions = { label: topic, color: getNextGroupColorName(), insertBefore: firstValidTabForGroup };
                     try {
-                        const insertBeforeTabInfo = tabDataCache.get(groupOptions.insertBefore) || getTabData(groupOptions.insertBefore);
-                        // console.log(` -> Calling gBrowser.addTabGroup (Label: "${groupOptions.label}", Color: ${groupOptions.color}, Before: "${insertBeforeTabInfo.title}")`);
                         gBrowser.addTabGroup(tabsForThisTopic, groupOptions);
-                        // console.log(` -> Call to addTabGroup for "${topic}" completed.`);
                     } catch (e) {
                         console.error(`Error calling gBrowser.addTabGroup for topic "${topic}":`, e);
-                        // Attempt recovery: Check if group exists despite error, then move individually
+                        // Attempt recovery
                         const groupAfterError = findGroupElement(topic, currentWorkspaceId);
                         if (groupAfterError) {
                             console.warn(` -> Group "${topic}" might exist despite error. Attempting recovery move.`);
@@ -563,10 +525,8 @@
             console.error("Error during overall sorting process:", error);
         } finally {
             isSorting = false;
-            // Clean up any remaining loading indicators just in case
             setTimeout(() => {
                 Array.from(gBrowser.tabs).forEach(tab => tab.classList.remove('tab-is-sorting'));
-                // console.log("Cleaned up loading indicators.");
             }, 500);
         }
     };
@@ -575,9 +535,8 @@
 
     function ensureSortButtonExists(separator) {
         if (!separator || separator.querySelector('#sort-button')) {
-            return; // Already exists or invalid separator
+            return;
         }
-        // console.log("SORT BTN: Creating and appending button..."); // Less verbose
         try {
             const buttonFragment = window.MozXULElement.parseXULToFragment(`
                 <toolbarbutton
@@ -588,7 +547,6 @@
                 </toolbarbutton>
             `);
             separator.appendChild(buttonFragment.firstChild.cloneNode(true));
-            // console.log("SORT BTN: Button successfully appended."); // Less verbose
         } catch (e) {
             console.error("SORT BTN: Error creating/appending button:", e);
         }
@@ -599,7 +557,6 @@
         if (separators.length > 0) {
             separators.forEach(ensureSortButtonExists);
         } else {
-            // Fallback only if no separators found
             const periphery = document.querySelector('#tabbrowser-arrowscrollbox-periphery');
             if (periphery && !periphery.querySelector('#sort-button')) {
                 console.warn("SORT BTN: No separators found, attempting fallback append to periphery.");
@@ -617,7 +574,6 @@
             return;
         }
 
-        // Add Command definition if missing
         if (!zenCommands.querySelector("#cmd_zenSortTabs")) {
             try {
                 const command = window.MozXULElement.parseXULToFragment(`<command id="cmd_zenSortTabs"/>`).firstChild;
@@ -628,12 +584,10 @@
             }
         }
 
-        // Add the event listener only once
         if (!sortButtonListenerAdded) {
             try {
                 zenCommands.addEventListener('command', (event) => {
                     if (event.target.id === "cmd_zenSortTabs") {
-                        // console.log("EVENT: 'cmd_zenSortTabs' command triggered."); // Less verbose
                         sortTabsByTopic();
                     }
                 });
@@ -652,8 +606,6 @@
              return;
         }
 
-        // console.log("SORT BTN: Hooking into ZenWorkspaces events."); // Less verbose
-
         const originalOnTabBrowserInserted = ZenWorkspaces.onTabBrowserInserted;
         const originalUpdateTabsContainers = ZenWorkspaces.updateTabsContainers;
 
@@ -665,7 +617,7 @@
                      console.error("SORT BTN HOOK: Error in original onTabBrowserInserted:", e);
                 }
             }
-            addSortButtonToAllSeparators(); // Ensure button exists after potential UI changes
+            addSortButtonToAllSeparators();
         };
 
         ZenWorkspaces.updateTabsContainers = function(...args) {
@@ -676,14 +628,14 @@
                       console.error("SORT BTN HOOK: Error in original updateTabsContainers:", e);
                  }
             }
-            addSortButtonToAllSeparators(); // Ensure button exists after potential UI changes
+            addSortButtonToAllSeparators();
         };
     }
 
 
     // --- Initial Setup Trigger ---
     function initializeScript() {
-        console.log("INIT: Sort Tabs Script (v4.7) loading...");
+        console.log("INIT: Sort Tabs Script (v4.7.1) loading..."); // Updated version
         let checkCount = 0;
         const maxChecks = 30;
         const checkInterval = 1000;
@@ -702,13 +654,12 @@
                 console.log(`INIT: Required elements found after ${checkCount} checks. Initializing...`);
                 clearInterval(initCheckInterval);
 
-                // Defer slightly to ensure UI is fully settled
                 setTimeout(() => {
                     try {
-                        injectStyles();
+                        injectStyles(); // Make sure styles are injected/updated
                         setupSortCommandAndListener();
-                        addSortButtonToAllSeparators(); // Initial button placement
-                        setupZenWorkspaceHooks();       // Set up hooks for dynamic updates
+                        addSortButtonToAllSeparators();
+                        setupZenWorkspaceHooks();
                         console.log("INIT: Sort Button setup and hooks complete.");
                     } catch (e) {
                         console.error("INIT: Error during deferred initial setup:", e);
@@ -717,7 +668,7 @@
 
             } else if (checkCount > maxChecks) {
                 clearInterval(initCheckInterval);
-                console.error(`INIT: Failed to find required elements after ${maxChecks} checks. Sort button/hooks may not initialize correctly. Status:`, {
+                console.error(`INIT: Failed to find required elements after ${maxChecks} checks. Status:`, {
                     gBrowserReady, commandSetExists, separatorExists, zenWorkspacesReady
                 });
             }
@@ -731,4 +682,4 @@
         window.addEventListener("load", initializeScript, { once: true });
     }
 
-})();
+})(); // End script
