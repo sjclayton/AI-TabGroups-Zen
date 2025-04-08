@@ -1,5 +1,9 @@
 # ✨ Ai Tab Groups for Zen Browser ✨
 ‼️This is still Work-in-Progress ‼️
+
+https://github.com/user-attachments/assets/fc792843-b1da-448e-ba00-63322a3d9c99
+
+
 ## Pre-requisites
 - Enable userChrome Customizations:
     In `about:config` go to `toolkit.legacyUserProfileCustomizations.stylesheets` and set it to True.
@@ -11,7 +15,7 @@
 - __**RECOMENDED**__ Alternatively u can use gemini api key, go to [Ai Studios](https://aistudio.google.com) and get a API Key. Paste it inside the apiConfig
 
 ## Setup and Install
-- Copy and paste the `tab_sort.uc.js` file to your `chrome` folder.
+- Copy and paste the `tab_sort.uc.js` file to your `chrome/JS` folder.
 - In the above file, go to `apiConfig` and change the model name to whatever you have installed. By default its set to `llama3.1:latest`
 - Open Zen browser, go to `about:support` and clear start up cache.
 - Done. Enjoy ^^
