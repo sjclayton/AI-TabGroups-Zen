@@ -38,7 +38,7 @@
             },
             gemini: {
                 enabled: true,
-                apiKey: 'YOUR_GEMINI_API_KEY', // <<< --- PASTE YOUR KEY HERE --- >>> // AIzaSyCXgBVgLbqPz6YfsvNyXNhjrHTfhDJvzJk
+                apiKey: 'YOUR_GEMINI-API-KEY', // <<< --- PASTE YOUR KEY HERE --- >>> 
                 model: 'gemini-1.5-flash-latest',
                 // Endpoint structure: https://generativelanguage.googleapis.com/v1beta/models/{model}:{method}
                 apiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/',
@@ -147,33 +147,84 @@
             color: white;
             border-radius: 4px;
         }
-
-        /* Separator Hover Logic */
+        /* Separator Base Style (Ensures background is animatable) */
         .vertical-pinned-tabs-container-separator {
-             display: flex;
+             display: flex !important;
              flex-direction: column;
              margin-left: 0;
-             transition: width 0.1s ease-in-out, margin-right 0.1s ease-in-out;
+             min-height: 1px;
+             background-color: var(--lwt-toolbarbutton-border-color, rgba(200, 200, 200, 0.1)); /* Subtle base color */
+             transition: width 0.1s ease-in-out, margin-right 0.1s ease-in-out, background-color 0.3s ease-out; /* Add background transition */
         }
-        /* Hover when BOTH buttons are potentially visible */
+        /* Separator Hover Logic */
         .vertical-pinned-tabs-container-separator:has(#sort-button):has(#clear-button):hover {
-             width: calc(100% - 115px); /* 60px (clear) + 55px (sort) */
-             margin-right: auto;
+            width: calc(100% - 115px); /* 60px (clear) + 55px (sort) */
+            margin-right: auto;
+            background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2)); /* Slightly lighter on hover */
         }
          /* Hover when ONLY SORT is present */
         .vertical-pinned-tabs-container-separator:has(#sort-button):not(:has(#clear-button)):hover {
-             width: calc(100% - 65px); /* Only space for sort + margin */
-             margin-right: auto;
+            width: calc(100% - 65px); /* Only space for sort + margin */
+            margin-right: auto;
+            background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
         }
          /* Hover when ONLY CLEAR is present */
         .vertical-pinned-tabs-container-separator:not(:has(#sort-button)):has(#clear-button):hover {
-             width: calc(100% - 60px); /* Only space for clear */
-             margin-right: auto;
+            width: calc(100% - 60px); /* Only space for clear */
+            margin-right: auto;
+            background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
         }
         /* Show BOTH buttons on separator hover */
         .vertical-pinned-tabs-container-separator:hover #sort-button,
         .vertical-pinned-tabs-container-separator:hover #clear-button {
             opacity: 1;
+        }
+
+        /* When theres no Pinned Tabs */
+        .zen-workspace-tabs-section[hide-separator] .vertical-pinned-tabs-container-separator {
+            display: flex !important;
+            flex-direction: column !important;
+            margin-left: 0 !important;
+            margin-top: 5px !important;
+            margin-bottom: 8px !important;
+            min-height: 1px !important;
+            background-color: var(--lwt-toolbarbutton-border-color, rgba(200, 200, 200, 0.1)); /* Subtle base color */
+            transition: width 0.1s ease-in-out, margin-right 0.1s ease-in-out, background-color 0.3s ease-out; /* Add background transition */
+        }
+         /* Hover when BOTH buttons are potentially visible (No Pinned) */
+        .zen-workspace-tabs-section[hide-separator] .vertical-pinned-tabs-container-separator:has(#sort-button):has(#clear-button):hover {
+             width: calc(100% - 115px); /* 60px (clear) + 55px (sort) */
+             margin-right: auto;
+             background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
+        }
+         /* Hover when ONLY SORT is present (No Pinned) */
+        .zen-workspace-tabs-section[hide-separator] .vertical-pinned-tabs-container-separator:has(#sort-button):not(:has(#clear-button)):hover {
+                width: calc(100% - 65px); /* Only space for sort + margin */
+                margin-right: auto;
+                background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
+            }
+            /* Hover when ONLY CLEAR is present (No Pinned) */
+        .zen-workspace-tabs-section[hide-separator] .vertical-pinned-tabs-container-separator:not(:has(#sort-button)):has(#clear-button):hover {
+                width: calc(100% - 60px); /* Only space for clear */
+                margin-right: auto;
+                background-color: var(--lwt-toolbarbutton-hover-background, rgba(200, 200, 200, 0.2));
+            }
+        /* Show BOTH buttons on separator hover (No Pinned) */
+        .zen-workspace-tabs-section[hide-separator] .vertical-pinned-tabs-container-separator:hover #sort-button,
+        .zen-workspace-tabs-section[hide-separator] .vertical-pinned-tabs-container-separator:hover #clear-button {
+            opacity: 1;
+        }
+
+        /* Separator Pulsing Animation */
+        @keyframes pulse-separator-bg {
+            0% { background-color: var(--lwt-toolbarbutton-border-color, rgb(255, 141, 141)); }
+            50% { background-color: var(--lwt-toolbarbutton-hover-background, rgba(137, 178, 255, 0.91)); } /* Brighter pulse color */
+            100% { background-color: var(--lwt-toolbarbutton-border-color, rgb(142, 253, 238)); }
+        }
+
+        .separator-is-sorting {
+            animation: pulse-separator-bg 1.5s ease-in-out infinite;
+            will-change: background-color;
         }
 
         /* Tab Animations */
@@ -195,9 +246,6 @@
         }
         .tabbrowser-tab {
             transition: transform 0.3s ease-out, opacity 0.3s ease-out, max-height 0.5s ease-out, margin 0.5s ease-out, padding 0.5s ease-out; /* Add transition for closing */
-        }
-        tab-group {
-            transition: background-color 0.3s ease;
         }
     `
     };
@@ -352,7 +400,6 @@
         return colorName;
     };
 
-    // --- FIXED HELPER ---
     const findGroupElement = (topicName, workspaceId) => {
         const sanitizedTopicName = topicName.trim();
         if (!sanitizedTopicName) return null;
@@ -371,7 +418,6 @@
             return null;
         }
     };
-    // --- END FIXED HELPER ---
 
     const levenshteinDistance = (a, b) => {
         if (!a || !b) return Math.max(a?.length ?? 0, b?.length ?? 0);
@@ -614,12 +660,21 @@
         isSorting = true;
         console.log("Starting tab sort (v4.9.2 - Fixed Group Selector)...");
 
+        let separatorsToSort = []; // Keep track of separators to remove class later
         try {
+             separatorsToSort = document.querySelectorAll('.vertical-pinned-tabs-container-separator');
+             if(separatorsToSort.length > 0) {
+                 console.log("Applying sorting indicator to separator(s)...");
+                 separatorsToSort.forEach(sep => sep.classList.add('separator-is-sorting'));
+             } else {
+                  console.warn("Could not find separator element to apply sorting indicator.");
+             }
+
             const currentWorkspaceId = window.ZenWorkspaces?.activeWorkspace;
             if (!currentWorkspaceId) {
                 console.error("Cannot get current workspace ID.");
-                isSorting = false;
-                return;
+                // No need to set isSorting = false here, finally block handles it
+                return; // Exit early
             }
 
             // --- Step 1: Get ALL Existing Group Names for Context ---
@@ -629,11 +684,9 @@
             console.log("Querying for groups using selector:", groupSelector);
 
             document.querySelectorAll(groupSelector).forEach(groupEl => {
-                // console.log("Found potential group element:", groupEl, "Label:", groupEl.getAttribute('label')); // Optional debug log
                 const label = groupEl.getAttribute('label');
                 if (label) {
                     allExistingGroupNames.add(label);
-                    // console.log(`Added existing group name: "${label}"`); // Optional debug log
                 } else {
                     console.log("Group element found, but missing label attribute:", groupEl);
                 }
@@ -643,9 +696,8 @@
             // CORRECTED: Filter initial tabs - ensure they aren't already in a group matched by the NEW selector
             const initialTabsToSort = Array.from(gBrowser.tabs).filter(tab => {
                 const isInCorrectWorkspace = tab.getAttribute('zen-workspace-id') === currentWorkspaceId;
-                // Check if the tab's closest tab-group parent matches the workspace criteria
                 const groupParent = tab.closest('tab-group');
-                const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false; // Check if parent group is in the right workspace
+                const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
 
                 return isInCorrectWorkspace &&             // Must be in the target workspace
                        !tab.pinned &&                     // Not pinned
@@ -657,8 +709,8 @@
 
             if (initialTabsToSort.length === 0) {
                 console.log("No ungrouped, connected tabs to sort in this workspace.");
-                isSorting = false;
-                return;
+                // No need to set isSorting = false here, finally block handles it
+                return; // Exit early
             }
             console.log(`Found ${initialTabsToSort.length} potentially sortable tabs.`);
 
@@ -871,8 +923,8 @@
             console.log(" -> Final Consolidated groups:", Object.keys(finalGroups).map(k => `${k} (${finalGroups[k]?.length ?? 0})`).join(', '));
             if (Object.keys(finalGroups).length === 0) {
                 console.log("No valid groups identified after consolidation. Sorting finished.");
-                isSorting = false;
-                return;
+                // No need to set isSorting = false here, finally block handles it
+                return; // Exit early
             }
 
             // --- Step 2: Get existing group ELEMENTS once before the loop ---
@@ -991,15 +1043,27 @@
         } catch (error) {
             console.error("Error during overall sorting process:", error);
         } finally {
-            isSorting = false;
-            // Remove loading indicators after a delay
+            isSorting = false; // Ensure sorting flag is reset
+
+            // Remove loading indicator class
+            if (separatorsToSort.length > 0) {
+                console.log("Removing sorting indicator from separator(s)...");
+                separatorsToSort.forEach(sep => {
+                    // Check if element still exists before removing class
+                    if (sep && sep.isConnected) {
+                         sep.classList.remove('separator-is-sorting');
+                    }
+                });
+            }
+
+            // Remove tab loading indicators after a delay
             setTimeout(() => {
                 Array.from(gBrowser.tabs).forEach(tab => {
                     if (tab && tab.isConnected) {
                         tab.classList.remove('tab-is-sorting');
                     }
                 });
-            }, 500);
+            }, 500); // Keep existing delay for tabs
         }
     };
     // --- End Sorting Function ---
@@ -1289,5 +1353,5 @@
         // Otherwise, wait for the 'load' event
         window.addEventListener("load", initializeScript, { once: true });
     }
-
+  
 })(); // End script wrapper
