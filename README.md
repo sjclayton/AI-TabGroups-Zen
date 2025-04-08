@@ -10,13 +10,20 @@ https://github.com/user-attachments/assets/fc792843-b1da-448e-ba00-63322a3d9c99
 - Install and Setup the userChrome.js Loader from [Autoconfig](https://github.com/MrOtherGuy/fx-autoconfig/tree/master)
 - Install the Tab groups config from [Advanced Tab Groups](https://github.com/Anoms12/Advanced-Tab-Groups)
     If you already have a TabGroup Config you can skip this
-- For the AI to work install [Ollama](https://ollama.com/)
-    Im using the `llama3.1` in the script, you are free to use anything else if you prefer to do so.
-- __**RECOMENDED**__ Alternatively u can use gemini api key, go to [Ai Studios](https://aistudio.google.com) and get a API Key. Paste it inside the apiConfig
-
+  
 ## Setup and Install
 - Copy and paste the `tab_sort.uc.js` file to your `chrome/JS` folder.
-- In the above file, go to `apiConfig` and change the model name to whatever you have installed. By default its set to `llama3.1:latest`
+### AI Setup
+1. For Gemini (RECOMMENDED)
+    - Set `gemini { enabled:true }` in `apiConfig` and `ollama { enabled:false }` in `apiConfig`
+    - Get an API Key from [Ai Studios](https://aistudio.google.com)
+    - Replace `YOUR_GEMINI_API_KEY` with the copied API key
+    - Dont change the gemini model since 2.0 has very low rate limits (unless you are rich ig)
+2. For Ollama
+    - Download and install [Ollama](https://ollama.com/)
+    - Install your prefered model. The script uses  `llama3.1` by default
+    - Set  `ollama { enabled:true }` in `apiConfig` and  `gemini { enabled:false }` in `apiConfig`
+    - Set the model you downloaded in ollama.model: in the config (you can see the models by doing `ollama list` in terminal)
 - Open Zen browser, go to `about:support` and clear start up cache.
 - Done. Enjoy ^^
 
