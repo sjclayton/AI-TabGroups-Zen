@@ -1,4 +1,3 @@
-// FINAL VERSION 4.9.2-ClearOnly-Minified (Removed Sort, Comments, Logs)
 (() => {
     const CONFIG = {
         styles: `
