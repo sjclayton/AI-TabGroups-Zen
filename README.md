@@ -24,6 +24,7 @@ https://github.com/user-attachments/assets/fc792843-b1da-448e-ba00-63322a3d9c99
     - Install your prefered model. The script uses  `llama3.1` by default
     - Set  `ollama { enabled:true }` in `apiConfig` and  `gemini { enabled:false }` in `apiConfig`
     - Set the model you downloaded in ollama.model: in the config (you can see the models by doing `ollama list` in terminal)
+- Make sure `browser.tabs.groups.smart.enabled` is set to `False` in `about:config`
 - Open Zen browser, go to `about:support` and clear start up cache.
 - Done. Enjoy ^^
 
