@@ -964,23 +964,16 @@
 
             // --- Process each final, consolidated group ---
             for (const topic in finalGroups) {
-                // Filter AGAIN for valid, connected tabs
+                // Filter AGAIN for valid, connected tabs right before moving/grouping
                 const tabsForThisTopic = finalGroups[topic].filter(t => {
                     if (!t || !t.isConnected) return false;
-                    const groupParent = t.closest('tab-group');
-                    const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
-                    if (!isSortingSelectedTabs) {
-                        // Only allow ungrouped tabs to be consider when NOT multi-selecting
-                        return !isInGroupInCorrectWorkspace;
-                    }
-                    // If there is multiple tabs selected, allow even if already in a group
+                    // Always allow valid tabs through; group membership will be checked at move time
                     return true;
-                });
-
+                 });
 
                 if (tabsForThisTopic.length === 0) {
-                    console.log(` -> Skipping group "${topic}" as no valid, *ungrouped* tabs remain in this workspace.`);
-                    continue; // Skip empty or already-grouped collections
+                    console.log(` -> Skipping group "${topic}" as no valid, unsorted tabs remain in this workspace.`);
+                    continue; // Skip empty or already correctly sorted collections
                 }
 
                 // --- Step 3: Use the Map for lookup ---
@@ -1000,13 +993,14 @@
                         }
                         // Move tabs one by one
                         for (const tab of tabsForThisTopic) {
-                            // Final check before moving
+                            if (!tab || !tab.isConnected) continue;
                             const groupParent = tab.closest('tab-group');
-                            const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
-                            if (tab && tab.isConnected && !isInGroupInCorrectWorkspace) {
+                            // Only skip if already in the *target* group
+                            const isAlreadyInTargetGroup = groupParent === existingGroupElement;
+                            if (!isAlreadyInTargetGroup) {
                                 gBrowser.moveTabToGroup(tab, existingGroupElement);
                             } else {
-                                console.warn(` -> Tab "${getTabData(tab)?.title || 'Unknown'}" skipped moving to "${topic}" (already grouped or invalid).`);
+                                console.log(` -> Tab "${getTabData(tab)?.title || 'Unknown'}" is already in the correct group "${topic}", skipping move.`);
                             }
                         }
                     } catch (e) {
