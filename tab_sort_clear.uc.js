@@ -1,4 +1,4 @@
-// FINAL VERSION 4.9.2 (Fixed Existing Group Selector using :has())
+// VERSION 4.10.0 (Added tab multi-selection sort capability)
 (() => {
     // --- Configuration ---
     const CONFIG = {
@@ -658,7 +658,13 @@
             return;
         }
         isSorting = true;
-        console.log("Starting tab sort (v4.9.2 - Fixed Group Selector)...");
+
+        // Check for multiple tab selection
+        const selectedTabs = gBrowser.selectedTabs;
+        const isSortingSelectedTabs = selectedTabs.length > 1;
+        const actionType = isSortingSelectedTabs ? "selected tabs" : "all ungrouped tabs";
+
+        console.log(`Starting tab sort (${actionType} mode) - (v4.10.0 - Flexible Group Selector)...`);
 
         let separatorsToSort = []; // Keep track of separators to remove class later
         try {
@@ -693,26 +699,43 @@
             });
             console.log(`Found ${allExistingGroupNames.size} existing group names for context:`, Array.from(allExistingGroupNames));
 
-            // CORRECTED: Filter initial tabs - ensure they aren't already in a group matched by the NEW selector
-            const initialTabsToSort = Array.from(gBrowser.tabs).filter(tab => {
-                const isInCorrectWorkspace = tab.getAttribute('zen-workspace-id') === currentWorkspaceId;
-                const groupParent = tab.closest('tab-group');
-                const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
-
-                return isInCorrectWorkspace &&             // Must be in the target workspace
-                       !tab.pinned &&                     // Not pinned
-                       !tab.hasAttribute('zen-empty-tab') && // Not an empty zen tab
-                       !isInGroupInCorrectWorkspace &&    // Not already in a group belonging to this workspace
-                       tab.isConnected;                   // Tab is connected
-            });
-
+            // Determine if we are sorting multiple selected tabs
+            let initialTabsToSort = [];
+            if (isSortingSelectedTabs) {
+                console.log(` -> Sorting ${selectedTabs.length} selected tabs.`);
+                initialTabsToSort = selectedTabs.filter(tab => {
+                    const isInCorrectWorkspace = tab.getAttribute('zen-workspace-id') === currentWorkspaceId;
+                    // For multi-selected tabs, we allow sorting even if they are already in a group.
+                    return (
+                        isInCorrectWorkspace &&
+                        !tab.pinned &&
+                        !tab.hasAttribute('zen-empty-tab') &&
+                        tab.isConnected
+                    );
+                });
+            } else {
+                // Sort all ungrouped tabs - ensure they aren't already in a group matched by the NEW selector
+                console.log(" -> Sorting all ungrouped tabs in the current workspace.");
+                initialTabsToSort = Array.from(gBrowser.tabs).filter(tab => {
+                    const isInCorrectWorkspace = tab.getAttribute('zen-workspace-id') === currentWorkspaceId;
+                    const groupParent = tab.closest('tab-group');
+                    const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
+                    return (
+                        isInCorrectWorkspace &&  // Must be in the target workspace
+                        !tab.pinned && // Not pinned
+                        !tab.hasAttribute('zen-empty-tab') && // Not an empty zen tab
+                        !isInGroupInCorrectWorkspace && // Not already in a group belonging to this workspace
+                        tab.isConnected // Tab is connected
+                    );
+                });
+            }
 
             if (initialTabsToSort.length === 0) {
-                console.log("No ungrouped, connected tabs to sort in this workspace.");
+                console.log(`No tabs to sort in this workspace (${actionType} mode).`);
                 // No need to set isSorting = false here, finally block handles it
                 return; // Exit early
             }
-            console.log(`Found ${initialTabsToSort.length} potentially sortable tabs.`);
+            console.log(`Found ${initialTabsToSort.length} tabs to process for sorting.`);
 
             // --- Pre-Grouping Logic (Keywords & Hostnames) ---
             const preGroups = {};
@@ -941,19 +964,16 @@
 
             // --- Process each final, consolidated group ---
             for (const topic in finalGroups) {
-                // Filter AGAIN for valid, connected tabs NOT ALREADY IN ANY GROUP right before moving/grouping
-                // Check closest group parent *again* before moving
+                // Filter AGAIN for valid, connected tabs right before moving/grouping
                 const tabsForThisTopic = finalGroups[topic].filter(t => {
-                    const groupParent = t.closest('tab-group');
-                    // Check if the parent group matches the selector for the *current* workspace
-                    const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
-                    return t && t.isConnected && !isInGroupInCorrectWorkspace;
+                    if (!t || !t.isConnected) return false;
+                    // Always allow valid tabs through; group membership will be checked at move time
+                    return true;
                  });
 
-
                 if (tabsForThisTopic.length === 0) {
-                    console.log(` -> Skipping group "${topic}" as no valid, *ungrouped* tabs remain in this workspace.`);
-                    continue; // Skip empty or already-grouped collections
+                    console.log(` -> Skipping group "${topic}" as no valid, unsorted tabs remain in this workspace.`);
+                    continue; // Skip empty or already correctly sorted collections
                 }
 
                 // --- Step 3: Use the Map for lookup ---
@@ -973,13 +993,14 @@
                         }
                         // Move tabs one by one
                         for (const tab of tabsForThisTopic) {
-                            // Final check before moving
+                            if (!tab || !tab.isConnected) continue;
                             const groupParent = tab.closest('tab-group');
-                            const isInGroupInCorrectWorkspace = groupParent ? groupParent.matches(groupSelector) : false;
-                            if (tab && tab.isConnected && !isInGroupInCorrectWorkspace) {
+                            // Only skip if already in the *target* group
+                            const isAlreadyInTargetGroup = groupParent === existingGroupElement;
+                            if (!isAlreadyInTargetGroup) {
                                 gBrowser.moveTabToGroup(tab, existingGroupElement);
                             } else {
-                                console.warn(` -> Tab "${getTabData(tab)?.title || 'Unknown'}" skipped moving to "${topic}" (already grouped or invalid).`);
+                                console.log(` -> Tab "${getTabData(tab)?.title || 'Unknown'}" is already in the correct group "${topic}", skipping move.`);
                             }
                         }
                     } catch (e) {
@@ -1143,7 +1164,7 @@
         if (!container.querySelector('#sort-button')) {
             try {
                 const buttonFragment = window.MozXULElement.parseXULToFragment(
-                    `<toolbarbutton id="sort-button" command="cmd_zenSortTabs" label="⇄ Sort" tooltiptext="Sort Tabs into Groups by Topic (AI)"/>`
+                    `<toolbarbutton id="sort-button" command="cmd_zenSortTabs" label="⇅ Sort" tooltiptext="Sort Tabs into Groups by Topic (AI)"/>`
                 );
                 container.appendChild(buttonFragment.firstChild.cloneNode(true));
                 console.log("BUTTONS: Sort button added to container:", container.id || container.className);
@@ -1284,7 +1305,7 @@
     // --- Initial Setup Trigger ---
 
     function initializeScript() {
-        console.log("INIT: Sort & Clear Tabs Script (v4.9.2 - Gemini - Structured) loading...");
+        console.log("INIT: Sort & Clear Tabs Script (v4.10.0 - Gemini - Structured) loading...");
         let checkCount = 0;
         const maxChecks = 30; // Check for up to ~30 seconds
         const checkInterval = 1000; // Check every second
