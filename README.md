@@ -5,7 +5,7 @@ https://github.com/user-attachments/assets/fc792843-b1da-448e-ba00-63322a3d9c99
 
 ## Pre-requisites
 - Enable userChrome Customizations:
-    In `about:config` go to `toolkit.legacyUserProfileCustomizations.stylesheets` and set it to True.
+    In `about:config` go to `toolkit.legacyUserProfileCustomizations.stylesheets` and set it to `true`.
 - Install and Setup the userChrome.js Loader from [Autoconfig](https://github.com/MrOtherGuy/fx-autoconfig/tree/master)
 - Install the Tab Groups config from [Advanced Tab Groups](https://github.com/Anoms12/Advanced-Tab-Groups)
     If you already have a Tab Groups config you can skip this
