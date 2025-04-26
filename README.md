@@ -31,7 +31,7 @@ https://github.com/user-attachments/assets/fc792843-b1da-448e-ba00-63322a3d9c99
 - The script has two phases, first it manually sorts tabs that have common words in their title and URL, second it uses the AI to sort rest of the tabs and checks if they fit in the existing groups (that were manually created) or if it should create a new group.
 - The script only fetches the tabs full URL and title, thus it prioritizes the title first for main context and URL for sub context.
 - The sort function only works when there is two or more tabs to sort into a group.
-- You can also have a selected group tabs sorted as well, this allows you to have fine grained control over the sorting (works for tabs that are already grouped as well, they may be re-sorted).
+- You can also have a selected group of tabs sorted as well, this allows you to have fine-grained control over the sorting (works for tabs that are already grouped as well, they may be re-sorted).
 - You are free to change the AI prompt to your suitable workflow. The prompt is at the top in `apiConfig`.
 - The `Clear` button only clears un-grouped non-pinned tabs.
 
