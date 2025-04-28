@@ -692,7 +692,9 @@
             document.querySelectorAll(groupSelector).forEach(groupEl => {
                 const label = groupEl.getAttribute('label');
                 if (label) {
-                    allExistingGroupNames.add(label);
+                    // Always normalize group names for context
+                    allExistingGroupNames.add(processTopic(label));
+                    console.log("Found existing group:", label);
                 } else {
                     console.log("Group element found, but missing label attribute:", groupEl);
                 }
@@ -955,7 +957,8 @@
             document.querySelectorAll(groupSelector).forEach(groupEl => { // Use the same corrected selector
                 const label = groupEl.getAttribute('label');
                 if (label) {
-                    existingGroupElementsMap.set(label, groupEl);
+                    // Always normalize label for map key
+                    existingGroupElementsMap.set(processTopic(label), groupEl);
                 }
             });
 
@@ -977,7 +980,9 @@
                 }
 
                 // --- Step 3: Use the Map for lookup ---
-                const existingGroupElement = existingGroupElementsMap.get(topic);
+                // Always normalize topic for lookup
+                const normalizedTopic = processTopic(topic);
+                const existingGroupElement = existingGroupElementsMap.get(normalizedTopic);
 
                 if (existingGroupElement && existingGroupElement.isConnected) { // Check if the element is still in the DOM
                     // Move tabs to EXISTING group
@@ -1027,17 +1032,17 @@
                         try {
                             // Create the group with all tabs at once
                             const newGroup = gBrowser.addTabGroup(tabsForThisTopic, groupOptions);
-
+                            // When creating a new group, also use normalizedTopic as the map key
                             if (newGroup && newGroup.isConnected) { // Check if group was created and is in DOM
                                 console.log(` -> Successfully created group element for "${topic}".`);
-                                existingGroupElementsMap.set(topic, newGroup); // Add to map for potential later reuse in this run
+                                existingGroupElementsMap.set(normalizedTopic, newGroup); // Add to map for potential later reuse in this run
                             } else {
                                 console.warn(` -> addTabGroup didn't return a connected element for "${topic}". Attempting fallback find.`);
                                 // Use the CORRECTED findGroupElement helper
                                 const newGroupElFallback = findGroupElement(topic, currentWorkspaceId);
                                 if (newGroupElFallback && newGroupElFallback.isConnected) {
                                     console.log(` -> Found new group element for "${topic}" via fallback.`);
-                                    existingGroupElementsMap.set(topic, newGroupElFallback); // Add to map via fallback
+                                    existingGroupElementsMap.set(normalizedTopic, newGroupElFallback); // Add to map via fallback
                                 } else {
                                     console.error(` -> Failed to find the newly created group element for "${topic}" even with fallback.`);
                                 }
