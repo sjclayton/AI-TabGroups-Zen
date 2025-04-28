@@ -90,7 +90,7 @@
         groupColorNames: [
             "blue", "red", "yellow", "green", "pink", "purple", "orange", "cyan", "gray"
         ],
-        skipPreGrouping: false, // If true, skip keyword/hosting pre-grouping and AI directly for all tabs
+        skipPreGrouping: false, // If true, skip keyword/hostname pre-grouping and AI directly for all tabs
         preGroupingThreshold: 2, // Min tabs for keyword/hostname pre-grouping
         titleKeywordStopWords: new Set([
             'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'of',
