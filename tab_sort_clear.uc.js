@@ -90,6 +90,7 @@
         groupColorNames: [
             "blue", "red", "yellow", "green", "pink", "purple", "orange", "cyan", "gray"
         ],
+        skipPreGrouping: false, // If true, skip keyword/hosting pre-grouping and AI directly for all tabs
         preGroupingThreshold: 2, // Min tabs for keyword/hostname pre-grouping
         titleKeywordStopWords: new Set([
             'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'of',
@@ -751,79 +752,81 @@
                 tabKeywordsCache.set(tab, data.title ? extractTitleKeywords(data.title) : new Set());
             });
 
-            // Keyword pre-grouping
-            const keywordToTabsMap = new Map();
-            initialTabsToSort.forEach(tab => {
-                const keywords = tabKeywordsCache.get(tab);
-                if (keywords) {
-                    keywords.forEach(keyword => {
-                        if (!keywordToTabsMap.has(keyword)) {
-                            keywordToTabsMap.set(keyword, new Set());
-                        }
-                        keywordToTabsMap.get(keyword).add(tab);
-                    });
-                }
-            });
-
-            const potentialKeywordGroups = [];
-            keywordToTabsMap.forEach((tabsSet, keyword) => {
-                if (tabsSet.size >= CONFIG.preGroupingThreshold) {
-                    potentialKeywordGroups.push({ keyword: keyword, tabs: tabsSet, size: tabsSet.size });
-                }
-            });
-            potentialKeywordGroups.sort((a, b) => b.size - a.size); // Process larger groups first
-
-            potentialKeywordGroups.forEach(({ keyword, tabs }) => {
-                const finalTabsForGroup = new Set();
-                tabs.forEach(tab => {
-                    if (!handledTabs.has(tab)) {
-                        finalTabsForGroup.add(tab);
+            if (!CONFIG.skipPreGrouping) {
+                // Keyword pre-grouping
+                const keywordToTabsMap = new Map();
+                initialTabsToSort.forEach(tab => {
+                    const keywords = tabKeywordsCache.get(tab);
+                    if (keywords) {
+                        keywords.forEach(keyword => {
+                            if (!keywordToTabsMap.has(keyword)) {
+                                keywordToTabsMap.set(keyword, new Set());
+                            }
+                            keywordToTabsMap.get(keyword).add(tab);
+                        });
                     }
                 });
-                if (finalTabsForGroup.size >= CONFIG.preGroupingThreshold) {
-                    const categoryName = processTopic(keyword);
-                    console.log(`   - Pre-Grouping by Title Keyword: "${keyword}" (Count: ${finalTabsForGroup.size}) -> Category: "${categoryName}"`);
-                    preGroups[categoryName] = Array.from(finalTabsForGroup);
-                    finalTabsForGroup.forEach(tab => handledTabs.add(tab));
-                }
-            });
 
-            // Hostname pre-grouping (for remaining tabs)
-            const hostnameCounts = {};
-            initialTabsToSort.forEach(tab => {
-                if (!handledTabs.has(tab)) {
-                    const data = tabDataCache.get(tab);
-                    if (data?.hostname && data.hostname !== 'N/A' && data.hostname !== 'Invalid URL' && data.hostname !== 'Internal Page') {
-                        hostnameCounts[data.hostname] = (hostnameCounts[data.hostname] || 0) + 1;
+                const potentialKeywordGroups = [];
+                keywordToTabsMap.forEach((tabsSet, keyword) => {
+                    if (tabsSet.size >= CONFIG.preGroupingThreshold) {
+                        potentialKeywordGroups.push({ keyword: keyword, tabs: tabsSet, size: tabsSet.size });
                     }
-                }
-            });
+                });
+                potentialKeywordGroups.sort((a, b) => b.size - a.size); // Process larger groups first
 
-            const sortedHostnames = Object.keys(hostnameCounts).sort((a, b) => hostnameCounts[b] - hostnameCounts[a]);
-
-            for (const hostname of sortedHostnames) {
-                if (hostnameCounts[hostname] >= CONFIG.preGroupingThreshold) {
-                    const categoryName = processTopic(hostname);
-                    // Avoid creating a hostname group if a keyword group with the same processed name already exists
-                    if (preGroups[categoryName]) {
-                        console.log(`   - Skipping Hostname Group for "${hostname}" -> Category "${categoryName}" (already exists from keywords).`);
-                        continue;
-                    }
-
-                    const tabsForHostnameGroup = [];
-                    initialTabsToSort.forEach(tab => {
+                potentialKeywordGroups.forEach(({ keyword, tabs }) => {
+                    const finalTabsForGroup = new Set();
+                    tabs.forEach(tab => {
                         if (!handledTabs.has(tab)) {
-                            const data = tabDataCache.get(tab);
-                            if (data?.hostname === hostname) {
-                                tabsForHostnameGroup.push(tab);
-                            }
+                            finalTabsForGroup.add(tab);
                         }
                     });
+                    if (finalTabsForGroup.size >= CONFIG.preGroupingThreshold) {
+                        const categoryName = processTopic(keyword);
+                        console.log(`   - Pre-Grouping by Title Keyword: "${keyword}" (Count: ${finalTabsForGroup.size}) -> Category: "${categoryName}"`);
+                        preGroups[categoryName] = Array.from(finalTabsForGroup);
+                        finalTabsForGroup.forEach(tab => handledTabs.add(tab));
+                    }
+                });
 
-                    if (tabsForHostnameGroup.length >= CONFIG.preGroupingThreshold) {
-                        console.log(`   - Pre-Grouping by Hostname: "${hostname}" (Count: ${tabsForHostnameGroup.length}) -> Category: "${categoryName}"`);
-                        preGroups[categoryName] = tabsForHostnameGroup;
-                        tabsForHostnameGroup.forEach(tab => handledTabs.add(tab));
+                // Hostname pre-grouping (for remaining tabs)
+                const hostnameCounts = {};
+                initialTabsToSort.forEach(tab => {
+                    if (!handledTabs.has(tab)) {
+                        const data = tabDataCache.get(tab);
+                        if (data?.hostname && data.hostname !== 'N/A' && data.hostname !== 'Invalid URL' && data.hostname !== 'Internal Page') {
+                            hostnameCounts[data.hostname] = (hostnameCounts[data.hostname] || 0) + 1;
+                        }
+                    }
+                });
+
+                const sortedHostnames = Object.keys(hostnameCounts).sort((a, b) => hostnameCounts[b] - hostnameCounts[a]);
+
+                for (const hostname of sortedHostnames) {
+                    if (hostnameCounts[hostname] >= CONFIG.preGroupingThreshold) {
+                        const categoryName = processTopic(hostname);
+                        // Avoid creating a hostname group if a keyword group with the same processed name already exists
+                        if (preGroups[categoryName]) {
+                            console.log(`   - Skipping Hostname Group for "${hostname}" -> Category "${categoryName}" (already exists from keywords).`);
+                            continue;
+                        }
+
+                        const tabsForHostnameGroup = [];
+                        initialTabsToSort.forEach(tab => {
+                            if (!handledTabs.has(tab)) {
+                                const data = tabDataCache.get(tab);
+                                if (data?.hostname === hostname) {
+                                    tabsForHostnameGroup.push(tab);
+                                }
+                            }
+                        });
+
+                        if (tabsForHostnameGroup.length >= CONFIG.preGroupingThreshold) {
+                            console.log(`   - Pre-Grouping by Hostname: "${hostname}" (Count: ${tabsForHostnameGroup.length}) -> Category: "${categoryName}"`);
+                            preGroups[categoryName] = tabsForHostnameGroup;
+                            tabsForHostnameGroup.forEach(tab => handledTabs.add(tab));
+                        }
                     }
                 }
             }
